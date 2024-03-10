@@ -31,7 +31,7 @@ func Exec(ctx context.Context, clients *infra.Clients, req *config.OnePasswordIm
 	var nextCursor string
 	now := utils.CtxNow(ctx)
 
-	for seq := 0; ; seq++ {
+	for seq := 0; req.MaxPages == nil || seq < *req.MaxPages; seq++ {
 		cursor, err := crawl(ctx, clients, req, now, seq, nextCursor)
 		if err != nil {
 			return goerr.Wrap(err, "failed to crawl 1Password logs").With("seq", seq).With("cursor", nextCursor).With("req", req)
@@ -113,6 +113,9 @@ func crawl(ctx context.Context, clients *infra.Clients, req *config.OnePasswordI
 
 	if err := w.Close(); err != nil {
 		return nil, goerr.Wrap(err, "failed to close gzip writer").With("object", objName)
+	}
+	if err := objWriter.Close(); err != nil {
+		return nil, goerr.Wrap(err, "failed to close object writer").With("object", objName)
 	}
 
 	if resp.HasMore {

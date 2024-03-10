@@ -11,37 +11,50 @@ import (
 )
 
 type Mock struct {
-	data map[string]*mockWriter
+	NewObjectWriterFn func(ctx context.Context, bucket model.CSBucket, object model.CSObjectName) io.WriteCloser
+	Results           []*MockResult
 }
 
-var _ interfaces.CloudStorage = (*Mock)(nil)
+var _ interfaces.CloudStorage = &Mock{}
 
-func NewMock() *Mock {
-	return &Mock{
-		data: map[string]*mockWriter{},
-	}
+type MockResult struct {
+	Body   Writer
+	Bucket model.CSBucket
+	Object model.CSObjectName
 }
 
-type mockWriter struct {
+type Writer struct {
 	bytes.Buffer
+	Closed bool
 }
 
-func (m *mockWriter) Close() error {
+func (x *Writer) Close() error {
+	x.Closed = true
 	return nil
 }
 
-// NewObjectReader implements interfaces.CloudStorage.
-func (m *Mock) NewObjectReader(ctx context.Context, bucket model.CSBucket, object model.CSObjectName) (io.ReadCloser, error) {
-	buf, ok := m.data[string(bucket)+"/"+string(object)]
-	if !ok {
-		return nil, goerr.New("no such object")
-	}
-	return io.NopCloser(bytes.NewReader(buf.Bytes())), nil
+func NewMock() *Mock {
+	return &Mock{}
 }
 
-// NewObjectWriter implements interfaces.CloudStorage.
-func (m *Mock) NewObjectWriter(ctx context.Context, bucket model.CSBucket, object model.CSObjectName) io.WriteCloser {
-	buf := &mockWriter{}
-	m.data[string(bucket)+"/"+string(object)] = buf
-	return buf
+func (x *Mock) NewObjectWriter(ctx context.Context, bucket model.CSBucket, object model.CSObjectName) io.WriteCloser {
+	if x.NewObjectWriterFn != nil {
+		return x.NewObjectWriterFn(ctx, bucket, object)
+	}
+
+	var result MockResult
+	x.Results = append(x.Results, &result)
+	result.Bucket = bucket
+	result.Object = object
+	return &result.Body
+}
+
+func (x *Mock) NewObjectReader(ctx context.Context, bucket model.CSBucket, object model.CSObjectName) (io.ReadCloser, error) {
+	for _, r := range x.Results {
+		if r.Bucket == bucket && r.Object == object {
+			return io.NopCloser(bytes.NewReader(r.Body.Bytes())), nil
+		}
+	}
+
+	return nil, goerr.New("not found")
 }

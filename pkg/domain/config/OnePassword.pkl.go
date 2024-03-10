@@ -11,6 +11,8 @@ type OnePassword interface {
 	GetDuration() *pkl.Duration
 
 	GetLimit() int
+
+	GetMaxPages() *int
 }
 
 var _ OnePassword = (*OnePasswordImpl)(nil)
@@ -21,6 +23,8 @@ type OnePasswordImpl struct {
 	Duration *pkl.Duration `pkl:"duration"`
 
 	Limit int `pkl:"limit"`
+
+	MaxPages *int `pkl:"max_pages"`
 
 	Id string `pkl:"id"`
 
@@ -39,6 +43,10 @@ func (rcv *OnePasswordImpl) GetDuration() *pkl.Duration {
 
 func (rcv *OnePasswordImpl) GetLimit() int {
 	return rcv.Limit
+}
+
+func (rcv *OnePasswordImpl) GetMaxPages() *int {
+	return rcv.MaxPages
 }
 
 func (rcv *OnePasswordImpl) GetId() string {

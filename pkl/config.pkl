@@ -15,6 +15,7 @@ class OnePassword extends Action {
     api_token: String // No validation to avoid leaking to logs
     duration: Duration(this > 1.s) = 20.min
     limit: Int(this > 0) = 1000
+    max_pages: Int(this > 0)?
 }
 
 class FalconDataReplicator extends Action {
