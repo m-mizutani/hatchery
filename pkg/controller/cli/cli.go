@@ -5,6 +5,7 @@ import (
 
 	"github.com/m-mizutani/hatchery/pkg/controller/cli/flags"
 	"github.com/m-mizutani/hatchery/pkg/domain/config"
+	"github.com/m-mizutani/hatchery/pkg/domain/model"
 	"github.com/m-mizutani/hatchery/pkg/utils"
 	"github.com/urfave/cli/v2"
 )
@@ -22,8 +23,9 @@ func Run(argv []string) error {
 	)
 
 	app := cli.App{
-		Name:  "hatchery",
-		Usage: "Hatchery is a tool to import SaaS data and logs into object storage",
+		Name:    "hatchery",
+		Usage:   "A tool to import SaaS data and logs into object storage",
+		Version: model.AppVersion,
 		Flags: mergeFlags([]cli.Flag{
 			&cli.StringFlag{
 				Name:        "config",
