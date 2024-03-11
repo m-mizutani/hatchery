@@ -11,6 +11,10 @@ type FalconDataReplicator interface {
 	GetAwsSecretAccessKey() string
 
 	GetSqsUrl() string
+
+	GetMaxMessages() *int
+
+	GetMaxPulls() *int
 }
 
 var _ FalconDataReplicator = (*FalconDataReplicatorImpl)(nil)
@@ -23,6 +27,10 @@ type FalconDataReplicatorImpl struct {
 	AwsSecretAccessKey string `pkl:"aws_secret_access_key"`
 
 	SqsUrl string `pkl:"sqs_url"`
+
+	MaxMessages *int `pkl:"max_messages"`
+
+	MaxPulls *int `pkl:"max_pulls"`
 
 	Id string `pkl:"id"`
 
@@ -45,6 +53,14 @@ func (rcv *FalconDataReplicatorImpl) GetAwsSecretAccessKey() string {
 
 func (rcv *FalconDataReplicatorImpl) GetSqsUrl() string {
 	return rcv.SqsUrl
+}
+
+func (rcv *FalconDataReplicatorImpl) GetMaxMessages() *int {
+	return rcv.MaxMessages
+}
+
+func (rcv *FalconDataReplicatorImpl) GetMaxPulls() *int {
+	return rcv.MaxPulls
 }
 
 func (rcv *FalconDataReplicatorImpl) GetId() string {

@@ -25,6 +25,8 @@ class FalconDataReplicator extends Action {
     aws_access_key_id: String(this.matches(Regex(#"^[A-Z0-9]{20}$"#)))
     aws_secret_access_key: String // No validation to avoid leaking to logs
     sqs_url: String(this.matches(Regex(#"^https:\/\/sqs\.[a-zA-Z0-9\-]{3,}\.amazonaws\.com\/\d{12}\/[a-zA-Z0-9_-]+$"#)))
+    max_messages: Int(this > 0)?
+    max_pulls: Int(this > 0)?
 }
 
 actions: List<Action>

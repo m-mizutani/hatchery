@@ -1,0 +1,20 @@
+{
+  "cid": "mi7ue3RAU0g0S82auotRRpL2qWjtG302",
+  "timestamp": 1709880887084,
+  "fileCount": 2,
+  "totalSize": 18402486,
+  "bucket": "cs-mav-asjkshdfkljahsdfkjhljhfa-s3alias",
+  "pathPrefix": "dAnpZeYcYD1J1B00-9f25c8f9/data/C246521D-D19E-43DD-9EB9-4EEE07F53D5A",
+  "files": [
+    {
+      "path": "dAnpZeYcYD1J1B00-9f25c8f9/data/C246521D-D19E-43DD-9EB9-4EEE07F53D5A/part-00000.gz",
+      "size": 18402486,
+      "checksum": "fb4a23224f90bd4065868e6de6f2e5a1"
+    },
+    {
+      "path": "dAnpZeYcYD1J1B00-9f25c8f9/data/C246521D-D19E-43DD-9EB9-4EEE07F53D5A/part-00001.gz",
+      "size": 18402486,
+      "checksum": "fb4a23224f90bd4065868e6de6f2e5a1"
+    }
+  ]
+}

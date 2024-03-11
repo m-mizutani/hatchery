@@ -48,7 +48,7 @@ func Exec(ctx context.Context, clients *infra.Clients, req *config.OnePasswordIm
 func crawl(ctx context.Context, clients *infra.Clients, req *config.OnePasswordImpl, end time.Time, seq int, cursor string) (*string, error) {
 	d := req.GetDuration().GoDuration()
 
-	objPrefix := config.ToObjNamePrefix(req, end)
+	objPrefix := config.LogObjNamePrefix(req, end)
 	objName := model.CSObjectName(
 		fmt.Sprintf("%s_%d_%d.json.gz", objPrefix, d/time.Second, seq),
 	)

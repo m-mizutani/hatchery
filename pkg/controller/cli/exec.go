@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/m-mizutani/goerr"
+	"github.com/m-mizutani/hatchery/pkg/actions/fdr"
 	"github.com/m-mizutani/hatchery/pkg/actions/one_password"
 	"github.com/m-mizutani/hatchery/pkg/domain/config"
 	"github.com/m-mizutani/hatchery/pkg/domain/model"
@@ -116,11 +117,10 @@ func execute(ctx context.Context, clients *infra.Clients, action config.Action) 
 	case *config.OnePasswordImpl:
 		return one_password.Exec(ctx, clients, v)
 	case *config.FalconDataReplicatorImpl:
-		return nil
+		return fdr.Exec(ctx, clients, v)
 	default:
 		return goerr.Wrap(model.ErrAssertFailed, "unknown action type").With("action", action)
 	}
-
 }
 
 func execDryRun(rt *runtime, actionIDs []string) error {
