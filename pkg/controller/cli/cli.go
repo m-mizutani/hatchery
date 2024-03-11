@@ -32,6 +32,7 @@ func Run(argv []string) error {
 				Aliases:     []string{"c"},
 				Usage:       "Path to configuration file",
 				Destination: &configPath,
+				EnvVars:     []string{"HATCHERY_CONFIG"},
 				Required:    true,
 			},
 		}, logger.Flags(), sentry.Flags()),
