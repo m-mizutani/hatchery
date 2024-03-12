@@ -11,5 +11,6 @@ RUN chmod +x /pkl
 FROM --platform=linux/x86_64 ubuntu:20.04
 COPY --from=build-go /app/hatchery /hatchery
 COPY --from=build-go /pkl /usr/local/bin/pkl
+RUN apt-get update && apt-get install -y ca-certificates openssl
 
 ENTRYPOINT ["/hatchery"]
