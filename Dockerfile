@@ -5,8 +5,11 @@ COPY . /app
 WORKDIR /app
 RUN go build -o hatchery -ldflags "-X github.com/m-mizutani/hatchery/pkg/domain/model.AppVersion=${BUILD_VERSION}" .
 
-FROM gcr.io/distroless/base:nonroot
-USER nonroot
+RUN curl -L -o /pkl https://github.com/apple/pkl/releases/download/0.25.2/pkl-linux-amd64
+RUN chmod +x /pkl
+
+FROM --platform=linux/x86_64 ubuntu:20.04
 COPY --from=build-go /app/hatchery /hatchery
+COPY --from=build-go /pkl /usr/local/bin/pkl
 
 ENTRYPOINT ["/hatchery"]
