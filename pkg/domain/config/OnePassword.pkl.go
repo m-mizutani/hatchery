@@ -28,6 +28,8 @@ type OnePasswordImpl struct {
 
 	Id string `pkl:"id"`
 
+	Tags *[]string `pkl:"tags"`
+
 	Bucket string `pkl:"bucket"`
 
 	Prefix *string `pkl:"prefix"`
@@ -51,6 +53,10 @@ func (rcv *OnePasswordImpl) GetMaxPages() *int {
 
 func (rcv *OnePasswordImpl) GetId() string {
 	return rcv.Id
+}
+
+func (rcv *OnePasswordImpl) GetTags() *[]string {
+	return rcv.Tags
 }
 
 func (rcv *OnePasswordImpl) GetBucket() string {

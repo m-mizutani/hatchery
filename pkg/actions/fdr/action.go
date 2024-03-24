@@ -59,7 +59,7 @@ func Exec(ctx context.Context, clients *infra.Clients, req *config.FalconDataRep
 	// Create AWS service clients
 	sqsClient := clients.NewSQS(awsSession)
 	s3Client := clients.NewS3(awsSession)
-	prefix := config.LogObjNamePrefix(req, utils.CtxNow(ctx))
+	prefix := model.LogObjNamePrefix(req, utils.CtxNow(ctx))
 
 	// Receive messages from SQS queue
 	input := &sqs.ReceiveMessageInput{
