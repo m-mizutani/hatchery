@@ -1,10 +1,11 @@
 @go.Package { name = "github.com/m-mizutani/hatchery/pkg/domain/config" }
 module org.github.m_mizutani.hatchery.config
 
-import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.5.3#/go.pkl"
+import "package://pkg.pkl-lang.org/pkl-go/pkl.golang@0.6.0#/go.pkl"
 
 abstract class Action {
     id: String(this.matches(Regex(#"^[A-Za-z0-9][A-Za-z0-9-_]{1,128}[A-Za-z0-9]$"#)))
+    tags: List<String(this.matches(Regex(#"^[A-Za-z0-9][A-Za-z0-9-_]{1,128}[A-Za-z0-9]$"#)))>?
 
     // Destination
     bucket: String(this.matches(Regex(#"^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$"#)))

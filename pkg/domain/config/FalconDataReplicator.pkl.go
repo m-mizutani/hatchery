@@ -34,6 +34,8 @@ type FalconDataReplicatorImpl struct {
 
 	Id string `pkl:"id"`
 
+	Tags *[]string `pkl:"tags"`
+
 	Bucket string `pkl:"bucket"`
 
 	Prefix *string `pkl:"prefix"`
@@ -65,6 +67,10 @@ func (rcv *FalconDataReplicatorImpl) GetMaxPulls() *int {
 
 func (rcv *FalconDataReplicatorImpl) GetId() string {
 	return rcv.Id
+}
+
+func (rcv *FalconDataReplicatorImpl) GetTags() *[]string {
+	return rcv.Tags
 }
 
 func (rcv *FalconDataReplicatorImpl) GetBucket() string {

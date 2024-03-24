@@ -1,26 +1,20 @@
 package cli
 
 import (
-	"context"
-	"log/slog"
-	"sync"
-
-	"github.com/m-mizutani/goerr"
-	"github.com/m-mizutani/hatchery/pkg/actions/fdr"
-	"github.com/m-mizutani/hatchery/pkg/actions/one_password"
-	"github.com/m-mizutani/hatchery/pkg/domain/config"
 	"github.com/m-mizutani/hatchery/pkg/domain/model"
 	"github.com/m-mizutani/hatchery/pkg/infra"
 	"github.com/m-mizutani/hatchery/pkg/infra/cs"
+	"github.com/m-mizutani/hatchery/pkg/usecase"
 	"github.com/m-mizutani/hatchery/pkg/utils"
 	"github.com/urfave/cli/v2"
 )
 
 func cmdExec(rt *runtime) *cli.Command {
 	var (
-		actionIDs cli.StringSlice
-		allAction bool
-		dryRun    bool
+		actionIDs  cli.StringSlice
+		actionTags cli.StringSlice
+		allAction  bool
+		dryRun     bool
 	)
 
 	return &cli.Command{
@@ -35,6 +29,13 @@ func cmdExec(rt *runtime) *cli.Command {
 				Usage:       "Action ID",
 				EnvVars:     []string{"HATCHERY_EXEC_ID"},
 				Destination: &actionIDs,
+			},
+			&cli.StringSliceFlag{
+				Name:        "tag",
+				Aliases:     []string{"t"},
+				Usage:       "Action tag",
+				EnvVars:     []string{"HATCHERY_EXEC_TAG"},
+				Destination: &actionTags,
 			},
 			&cli.BoolFlag{
 				Name:        "all",
@@ -52,24 +53,20 @@ func cmdExec(rt *runtime) *cli.Command {
 			},
 		},
 		Action: func(c *cli.Context) error {
-			reqID, ctx := utils.CtxRequestID(c.Context)
-			ctx = utils.CtxLoggerWith(ctx, slog.Any("request_id", reqID))
+			_, ctx := utils.CtxRequestID(c.Context)
 
-			if allAction && len(actionIDs.Value()) > 0 {
-				return goerr.Wrap(model.ErrInvalidOption, "both --all and --id are specified")
+			selector := &model.Selector{
+				IDs:  actionIDs.Value(),
+				Tags: actionTags.Value(),
+				All:  allAction,
+			}
+			if err := selector.Validate(); err != nil {
+				return err
 			}
 
-			ids := actionIDs.Value()
-			if allAction {
-				for _, action := range rt.config.Actions {
-					ids = append(ids, action.GetId())
-				}
-			} else if len(ids) == 0 {
-				return goerr.Wrap(model.ErrInvalidOption, "either --all or --id is required")
-			}
-
+			var options []usecase.ExecuteOption
 			if dryRun {
-				return execDryRun(rt, ids)
+				options = append(options, usecase.WithDryRun())
 			}
 
 			csClient, err := cs.New(ctx)
@@ -79,74 +76,11 @@ func cmdExec(rt *runtime) *cli.Command {
 
 			clients := infra.New(infra.WithCloudStorage(csClient))
 
-			errCh := make(chan error, len(ids))
-			var wg sync.WaitGroup
-
-			for _, id := range ids {
-				action := rt.config.LookupAction(id)
-				if action == nil {
-					return goerr.Wrap(model.ErrInvalidOption, "action not found", "id", id)
-				}
-
-				wg.Add(1)
-				go func(action config.Action) {
-					defer wg.Done()
-					if err := execute(ctx, clients, action); err != nil {
-						utils.HandleError(ctx, "failed to execute action", err)
-						errCh <- err
-					}
-				}(action)
-			}
-
-			wg.Wait()
-			close(errCh)
-
-			var errs []error
-			for err := range errCh {
-				errs = append(errs, err)
-			}
-			if len(errs) > 0 {
-				// This is a case that multiple actions are executed and some of them are failed. This error will not be reported to Sentry, just logging.
-				return goerr.Wrap(model.ErrActonFailed, "failed to execute actions").With("errors", errs)
+			if err := usecase.Execute(ctx, clients, rt.config.Actions, selector, options...); err != nil {
+				return err
 			}
 
 			return nil
 		},
-	}
-}
-
-func execute(ctx context.Context, clients *infra.Clients, action config.Action) error {
-	switch v := action.(type) {
-	case *config.OnePasswordImpl:
-		return one_password.Exec(ctx, clients, v)
-	case *config.FalconDataReplicatorImpl:
-		return fdr.Exec(ctx, clients, v)
-	default:
-		return goerr.Wrap(model.ErrAssertFailed, "unknown action type").With("action", action)
-	}
-}
-
-func execDryRun(rt *runtime, actionIDs []string) error {
-	var attrs []slog.Attr
-	for _, id := range actionIDs {
-		action := rt.config.LookupAction(id)
-		if action == nil {
-			return goerr.Wrap(model.ErrInvalidOption, "action not found", "id", id)
-		}
-		attrs = append(attrs, actionToAttr(action))
-	}
-
-	utils.Logger().Info("DryRun", "actions", attrs)
-	return nil
-}
-
-func actionToAttr(action config.Action) slog.Attr {
-	switch v := action.(type) {
-	case *config.OnePasswordImpl:
-		return slog.Any(v.Id, *v)
-	case *config.FalconDataReplicatorImpl:
-		return slog.Any(v.Id, *v)
-	default:
-		return slog.Any(action.GetId(), action)
 	}
 }

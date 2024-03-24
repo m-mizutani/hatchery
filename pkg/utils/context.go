@@ -41,7 +41,9 @@ func CtxRequestID(ctx context.Context) (model.RequestID, context.Context) {
 	}
 
 	newID := model.NewRequestID()
-	return newID, context.WithValue(ctx, ctxRequestIDKey{}, newID)
+	ctx = CtxLoggerWith(ctx, slog.Any("request_id", newID))
+	ctx = context.WithValue(ctx, ctxRequestIDKey{}, newID)
+	return newID, ctx
 }
 
 type ctxNowKey struct{}

@@ -4,6 +4,8 @@ package config
 type Action interface {
 	GetId() string
 
+	GetTags() *[]string
+
 	GetBucket() string
 
 	GetPrefix() *string
