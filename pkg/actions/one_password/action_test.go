@@ -18,7 +18,7 @@ import (
 	"github.com/m-mizutani/hatchery/pkg/utils"
 )
 
-func TestHarvester(t *testing.T) {
+func TestOnePassword(t *testing.T) {
 	mock := cs.NewMock()
 
 	clients := infra.New(infra.WithCloudStorage(mock))

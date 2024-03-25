@@ -23,7 +23,7 @@ func (t OnePasswordAPIToken) Bearer() string {
 }
 
 func LogObjNamePrefix(action config.Action, now time.Time) CSObjectName {
-	objPrefix := now.Format("logs/2006/01/02/15/04/")
+	objPrefix := now.Format("logs/2006/01/02/15/")
 	if prefix := action.GetPrefix(); prefix != nil {
 		objPrefix = *prefix + objPrefix
 	}

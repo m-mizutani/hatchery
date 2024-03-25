@@ -131,10 +131,10 @@ func TestFalconDataReplicator(t *testing.T) {
 	gt.A(t, mockCS.Results).Length(2).
 		At(0, func(t testing.TB, v *cs.MockResult) {
 			gt.Equal(t, v.Bucket, "test-bucket")
-			gt.Equal(t, v.Object, "logs/2021/09/01/02/03/dAnpZeYcYD1J1B00-9f25c8f9/data/C246521D-D19E-43DD-9EB9-4EEE07F53D5A/part-00000.gz")
+			gt.Equal(t, v.Object, "logs/2021/09/01/02/dAnpZeYcYD1J1B00-9f25c8f9/data/C246521D-D19E-43DD-9EB9-4EEE07F53D5A/part-00000.gz")
 		}).
 		At(1, func(t testing.TB, v *cs.MockResult) {
 			gt.Equal(t, v.Bucket, "test-bucket")
-			gt.Equal(t, v.Object, "logs/2021/09/01/02/03/dAnpZeYcYD1J1B00-9f25c8f9/data/C246521D-D19E-43DD-9EB9-4EEE07F53D5A/part-00001.gz")
+			gt.Equal(t, v.Object, "logs/2021/09/01/02/dAnpZeYcYD1J1B00-9f25c8f9/data/C246521D-D19E-43DD-9EB9-4EEE07F53D5A/part-00001.gz")
 		})
 }
