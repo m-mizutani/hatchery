@@ -15,7 +15,7 @@ abstract class Action {
 class OnePassword extends Action {
     api_token: String // No validation to avoid leaking to logs
     duration: Duration(this > 1.s) = 20.min
-    limit: Int(this > 0) = 1000
+    limit: Int(this > 0 && this < 10000) = 1000
     max_pages: Int(this > 0)?
 }
 
@@ -28,6 +28,13 @@ class FalconDataReplicator extends Action {
     sqs_url: String(this.matches(Regex(#"^https:\/\/sqs\.[a-zA-Z0-9\-]{3,}\.amazonaws\.com\/\d{12}\/[a-zA-Z0-9_-]+$"#)))
     max_messages: Int(this > 0)?
     max_pulls: Int(this > 0)?
+}
+
+class Slack extends Action {
+    access_token: String // No validation to avoid leaking to logs
+    duration: Duration(this > 1.s) = 20.min
+    limit: Int(this > 0) = 1000
+    max_pages: Int(this > 0)?
 }
 
 actions: List<Action>
