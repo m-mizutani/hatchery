@@ -44,11 +44,13 @@ const (
 func crawl(ctx context.Context, clients *infra.Clients, req config.Slack, end time.Time, seq int, cursor string) (*string, error) {
 	d := req.GetDuration().GoDuration()
 
-	objPrefix := model.LogObjNamePrefix(req, end)
 	objName := model.CSObjectName(
-		fmt.Sprintf("%s_%d_%08d.json.gz", objPrefix, d/time.Second, seq),
+		fmt.Sprintf("%s_%d_%08d.json.gz", end.Format("20040102T150304"), d/time.Second, seq),
 	)
-	objWriter := clients.CloudStorage().NewObjectWriter(ctx, model.CSBucket(req.GetBucket()), objName)
+	objWriter := clients.CloudStorage().NewObjectWriter(ctx,
+		model.CSBucket(req.GetBucket()),
+		model.LogObjNamePrefix(req, end)+objName,
+	)
 	w := gzip.NewWriter(objWriter)
 
 	startTime := end.Add(-d)
