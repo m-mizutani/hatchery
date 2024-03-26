@@ -65,10 +65,6 @@ type apiResponse struct {
 }
 
 func TestIntegration(t *testing.T) {
-	ctx := context.Background()
-	csClient := gt.R1(cs.New(ctx)).NoError(t)
-	clients := infra.New(infra.WithCloudStorage(csClient))
-
 	prefix := "slack-2/"
 	req := &config.SlackImpl{
 		AccessToken: utils.LoadEnv(t, "TEST_SLACK_ACCESS_TOKEN"),
@@ -80,6 +76,10 @@ func TestIntegration(t *testing.T) {
 		},
 		Limit: 1000,
 	}
+
+	ctx := context.Background()
+	csClient := gt.R1(cs.New(ctx)).NoError(t)
+	clients := infra.New(infra.WithCloudStorage(csClient))
 
 	gt.NoError(t, slack.Exec(ctx, clients, req)).Must()
 }
