@@ -69,14 +69,14 @@ func TestIntegration(t *testing.T) {
 	csClient := gt.R1(cs.New(ctx)).NoError(t)
 	clients := infra.New(infra.WithCloudStorage(csClient))
 
-	prefix := "slack/"
+	prefix := "slack-2/"
 	req := &config.SlackImpl{
 		AccessToken: utils.LoadEnv(t, "TEST_SLACK_ACCESS_TOKEN"),
 		Bucket:      utils.LoadEnv(t, "TEST_BUCKET"),
 		Prefix:      &prefix,
 		Duration: &pkl.Duration{
-			Value: 20,
-			Unit:  pkl.Minute,
+			Value: 1,
+			Unit:  pkl.Hour,
 		},
 		Limit: 1000,
 	}

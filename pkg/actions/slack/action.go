@@ -45,7 +45,7 @@ func crawl(ctx context.Context, clients *infra.Clients, req config.Slack, end ti
 	d := req.GetDuration().GoDuration()
 
 	objName := model.CSObjectName(
-		fmt.Sprintf("%s_%d_%08d.json.gz", end.Format("20040102T150304"), d/time.Second, seq),
+		fmt.Sprintf("%s_%d_%08d.json.gz", end.Format("20060102T150304"), d/time.Second, seq),
 	)
 	objWriter := clients.CloudStorage().NewObjectWriter(ctx,
 		model.CSBucket(req.GetBucket()),
@@ -56,11 +56,10 @@ func crawl(ctx context.Context, clients *infra.Clients, req config.Slack, end ti
 	startTime := end.Add(-d)
 	qv := url.Values{}
 	qv.Add("limit", fmt.Sprintf("%d", req.GetLimit()))
+	qv.Add("oldest", fmt.Sprintf("%d", startTime.Unix()))
 
 	if cursor != "" {
 		qv.Add("cursor", cursor)
-	} else {
-		qv.Add("oldest", fmt.Sprintf("%d", startTime.Unix()))
 	}
 
 	endpoint, err := url.Parse(baseURL)
@@ -69,7 +68,8 @@ func crawl(ctx context.Context, clients *infra.Clients, req config.Slack, end ti
 	}
 	endpoint.RawQuery = qv.Encode()
 
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
+	apiURL := endpoint.String()
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
 	if err != nil {
 		return nil, goerr.Wrap(err, "failed to create HTTP request")
 	}
