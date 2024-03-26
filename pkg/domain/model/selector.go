@@ -3,6 +3,7 @@ package model
 import (
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/hatchery/pkg/domain/config"
+	"github.com/m-mizutani/hatchery/pkg/domain/types"
 )
 
 type Selector struct {
@@ -13,13 +14,13 @@ type Selector struct {
 
 func (x *Selector) Validate() error {
 	if x.All && len(x.IDs) > 0 {
-		return goerr.Wrap(ErrInvalidOption, "cannot specify both all and ids")
+		return goerr.Wrap(types.ErrInvalidOption, "cannot specify both all and ids")
 	}
 	if x.All && len(x.Tags) > 0 {
-		return goerr.Wrap(ErrInvalidOption, "cannot specify both all and tags")
+		return goerr.Wrap(types.ErrInvalidOption, "cannot specify both all and tags")
 	}
 	if len(x.IDs) == 0 && len(x.Tags) == 0 && !x.All {
-		return goerr.Wrap(ErrInvalidOption, "must specify either ids, tags or all")
+		return goerr.Wrap(types.ErrInvalidOption, "must specify either ids, tags or all")
 	}
 
 	return nil

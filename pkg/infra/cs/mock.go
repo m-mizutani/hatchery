@@ -7,11 +7,11 @@ import (
 
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/hatchery/pkg/domain/interfaces"
-	"github.com/m-mizutani/hatchery/pkg/domain/model"
+	"github.com/m-mizutani/hatchery/pkg/domain/types"
 )
 
 type Mock struct {
-	NewObjectWriterFn func(ctx context.Context, bucket model.CSBucket, object model.CSObjectName) io.WriteCloser
+	NewObjectWriterFn func(ctx context.Context, bucket types.CSBucket, object types.CSObjectName) io.WriteCloser
 	Results           []*MockResult
 }
 
@@ -19,8 +19,8 @@ var _ interfaces.CloudStorage = &Mock{}
 
 type MockResult struct {
 	Body   Writer
-	Bucket model.CSBucket
-	Object model.CSObjectName
+	Bucket types.CSBucket
+	Object types.CSObjectName
 }
 
 type Writer struct {
@@ -37,7 +37,7 @@ func NewMock() *Mock {
 	return &Mock{}
 }
 
-func (x *Mock) NewObjectWriter(ctx context.Context, bucket model.CSBucket, object model.CSObjectName) io.WriteCloser {
+func (x *Mock) NewObjectWriter(ctx context.Context, bucket types.CSBucket, object types.CSObjectName) io.WriteCloser {
 	if x.NewObjectWriterFn != nil {
 		return x.NewObjectWriterFn(ctx, bucket, object)
 	}
@@ -49,7 +49,7 @@ func (x *Mock) NewObjectWriter(ctx context.Context, bucket model.CSBucket, objec
 	return &result.Body
 }
 
-func (x *Mock) NewObjectReader(ctx context.Context, bucket model.CSBucket, object model.CSObjectName) (io.ReadCloser, error) {
+func (x *Mock) NewObjectReader(ctx context.Context, bucket types.CSBucket, object types.CSObjectName) (io.ReadCloser, error) {
 	for _, r := range x.Results {
 		if r.Bucket == bucket && r.Object == object {
 			return io.NopCloser(bytes.NewReader(r.Body.Bytes())), nil

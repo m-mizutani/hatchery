@@ -15,6 +15,7 @@ import (
 	"github.com/m-mizutani/hatchery/pkg/domain/config"
 	"github.com/m-mizutani/hatchery/pkg/domain/interfaces"
 	"github.com/m-mizutani/hatchery/pkg/domain/model"
+	"github.com/m-mizutani/hatchery/pkg/domain/types"
 	"github.com/m-mizutani/hatchery/pkg/infra"
 	"github.com/m-mizutani/hatchery/pkg/utils"
 )
@@ -75,7 +76,7 @@ func Exec(ctx context.Context, clients *infra.Clients, req *config.FalconDataRep
 		}
 
 		c := &fdrClients{infra: clients, sqs: sqsClient, s3: s3Client}
-		if err := copy(ctx, c, input, model.CSBucket(req.Bucket), prefix); err != nil {
+		if err := copy(ctx, c, input, types.CSBucket(req.Bucket), prefix); err != nil {
 			if err == errNoMoreMessage {
 				break
 			}
@@ -90,7 +91,7 @@ var (
 	errNoMoreMessage = errors.New("no more message")
 )
 
-func copy(ctx context.Context, clients *fdrClients, input *sqs.ReceiveMessageInput, bucket model.CSBucket, prefix model.CSObjectName) error {
+func copy(ctx context.Context, clients *fdrClients, input *sqs.ReceiveMessageInput, bucket types.CSBucket, prefix types.CSObjectName) error {
 	result, err := clients.sqs.ReceiveMessageWithContext(ctx, input)
 	if err != nil {
 		return goerr.Wrap(err, "failed to receive messages from SQS").With("input", input)
@@ -119,7 +120,7 @@ func copy(ctx context.Context, clients *fdrClients, input *sqs.ReceiveMessageInp
 			}
 			defer utils.SafeClose(s3Obj.Body)
 
-			csObj := prefix + model.CSObjectName(file.Path)
+			csObj := prefix + types.CSObjectName(file.Path)
 			w := clients.infra.CloudStorage().NewObjectWriter(ctx, bucket, csObj)
 
 			if _, err := io.Copy(w, s3Obj.Body); err != nil {

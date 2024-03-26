@@ -11,6 +11,7 @@ import (
 	"github.com/m-mizutani/hatchery/pkg/actions/slack"
 	"github.com/m-mizutani/hatchery/pkg/domain/config"
 	"github.com/m-mizutani/hatchery/pkg/domain/model"
+	"github.com/m-mizutani/hatchery/pkg/domain/types"
 	"github.com/m-mizutani/hatchery/pkg/infra"
 	"github.com/m-mizutani/hatchery/pkg/utils"
 )
@@ -36,6 +37,7 @@ func WithExecFn(fn func(context.Context, *infra.Clients, config.Action) error) E
 }
 
 func Execute(ctx context.Context, clients *infra.Clients, actions []config.Action, selector *model.Selector, options ...ExecuteOption) error {
+	_, ctx = utils.CtxRequestID(ctx)
 	cfg := executeConfig{
 		execFn: executeAction,
 	}
@@ -43,14 +45,25 @@ func Execute(ctx context.Context, clients *infra.Clients, actions []config.Actio
 		opt(&cfg)
 	}
 
-	wg := sync.WaitGroup{}
-	errCh := make(chan error, len(actions))
-
+	var executable []config.Action
 	for _, action := range actions {
 		if !selector.Contains(action) {
 			continue
 		}
 
+		executable = append(executable, action)
+	}
+
+	var attrs []any
+	for _, action := range executable {
+		attrs = append(attrs, actionToAttr(action))
+	}
+	utils.CtxLogger(ctx).Info("Start execution", slog.Group("actions", attrs...))
+
+	wg := sync.WaitGroup{}
+	errCh := make(chan error, len(executable))
+
+	for _, action := range executable {
 		wg.Add(1)
 		go func(action config.Action) {
 			defer wg.Done()
@@ -78,7 +91,7 @@ func Execute(ctx context.Context, clients *infra.Clients, actions []config.Actio
 	}
 	if len(errs) > 0 {
 		// This is a case that multiple actions are executed and some of them are failed. This error will not be reported to Sentry, just logging.
-		return goerr.Wrap(model.ErrActonFailed, "failed to execute actions").With("errors", errs)
+		return goerr.Wrap(types.ErrActonFailed, "failed to execute actions").With("errors", errs)
 	}
 
 	return nil
@@ -93,26 +106,26 @@ func executeAction(ctx context.Context, clients *infra.Clients, action config.Ac
 	case *config.SlackImpl:
 		return slack.Exec(ctx, clients, v)
 	default:
-		return goerr.Wrap(model.ErrAssertFailed, "unknown action type").With("action", action)
+		return goerr.Wrap(types.ErrAssertFailed, "unknown action type").With("action", action)
 	}
 }
 
 func actionToAttr(action config.Action) slog.Attr {
 	switch v := action.(type) {
 	case *config.OnePasswordImpl:
-		return slog.Group("action",
+		return slog.Group(action.GetId(),
 			slog.String("type", "OnePassword"),
 			slog.Any("config", *v),
 		)
 
 	case *config.FalconDataReplicatorImpl:
-		return slog.Group("action",
+		return slog.Group(action.GetId(),
 			slog.String("type", "FalconDataReplicator"),
 			slog.Any("config", *v),
 		)
 
 	default:
-		return slog.Group("action",
+		return slog.Group(action.GetId(),
 			slog.String("type", "unknown"),
 			slog.Any("config", action),
 		)

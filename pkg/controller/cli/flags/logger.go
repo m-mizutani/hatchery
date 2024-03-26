@@ -10,7 +10,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/m-mizutani/clog"
 	"github.com/m-mizutani/goerr"
-	"github.com/m-mizutani/hatchery/pkg/domain/model"
+	"github.com/m-mizutani/hatchery/pkg/domain/types"
 	"github.com/m-mizutani/masq"
 
 	"github.com/urfave/cli/v2"
@@ -90,7 +90,7 @@ func (x *Logger) Configure() (*slog.Logger, error) {
 	}
 	level, ok := levelMap[x.level]
 	if !ok {
-		return nil, goerr.Wrap(model.ErrInvalidOption, "Invalid log level").With("level", x.level)
+		return nil, goerr.Wrap(types.ErrInvalidOption, "Invalid log level").With("level", x.level)
 	}
 
 	// Log format
@@ -126,7 +126,7 @@ func (x *Logger) Configure() (*slog.Logger, error) {
 		})
 
 	default:
-		return nil, goerr.Wrap(model.ErrInvalidOption, "Invalid log format").With("format", x.format)
+		return nil, goerr.Wrap(types.ErrInvalidOption, "Invalid log format").With("format", x.format)
 	}
 
 	return slog.New(handler), nil

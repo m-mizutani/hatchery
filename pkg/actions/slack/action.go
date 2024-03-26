@@ -14,6 +14,7 @@ import (
 	"github.com/m-mizutani/goerr"
 	"github.com/m-mizutani/hatchery/pkg/domain/config"
 	"github.com/m-mizutani/hatchery/pkg/domain/model"
+	"github.com/m-mizutani/hatchery/pkg/domain/types"
 	"github.com/m-mizutani/hatchery/pkg/infra"
 	"github.com/m-mizutani/hatchery/pkg/utils"
 )
@@ -44,12 +45,10 @@ const (
 func crawl(ctx context.Context, clients *infra.Clients, req config.Slack, end time.Time, seq int, cursor string) (*string, error) {
 	d := req.GetDuration().GoDuration()
 
-	objName := model.CSObjectName(
-		fmt.Sprintf("%s_%d_%08d.json.gz", end.Format("20060102T150304"), d/time.Second, seq),
-	)
+	objName := model.DefaultLogObjectName(ctx, req, end, seq)
 	objWriter := clients.CloudStorage().NewObjectWriter(ctx,
-		model.CSBucket(req.GetBucket()),
-		model.LogObjNamePrefix(req, end)+objName,
+		types.CSBucket(req.GetBucket()),
+		objName,
 	)
 	w := gzip.NewWriter(objWriter)
 

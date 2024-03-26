@@ -5,7 +5,6 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/m-mizutani/gt"
 	"github.com/m-mizutani/hatchery/pkg/actions/slack"
 	"github.com/m-mizutani/hatchery/pkg/domain/config"
+	"github.com/m-mizutani/hatchery/pkg/domain/model"
 	"github.com/m-mizutani/hatchery/pkg/infra"
 	"github.com/m-mizutani/hatchery/pkg/infra/cs"
 	"github.com/m-mizutani/hatchery/pkg/utils"
@@ -24,6 +24,7 @@ func TestAction(t *testing.T) {
 	clients := infra.New(infra.WithCloudStorage(mock))
 
 	ctx := context.Background()
+	_, ctx = utils.CtxRequestID(ctx)
 	now := time.Now().Add(-time.Hour * 24)
 	ctx = utils.CtxWithNow(ctx, func() time.Time { return now })
 
@@ -40,14 +41,10 @@ func TestAction(t *testing.T) {
 	}
 
 	gt.NoError(t, slack.Exec(ctx, clients, req)).Must()
-	expectedPath := fmt.Sprintf(
-		"logs/%04d/%02d/%02d/%02d/%s_86400_00000000.json.gz",
-		now.Year(), now.Month(), now.Day(), now.Hour(),
-		now.Format("20060102T150405"),
-	)
+	expectedPath := model.DefaultLogObjectName(ctx, req, now, 0)
 	r0 := mock.Results[0]
 	gt.Equal(t, r0.Bucket, "test-bucket")
-	gt.Equal(t, string(r0.Object), expectedPath)
+	gt.Equal(t, r0.Object, expectedPath)
 	gt.Equal(t, r0.Body.Closed, true)
 
 	var resp apiResponse

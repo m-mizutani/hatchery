@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/m-mizutani/hatchery/pkg/domain/model"
+	"github.com/m-mizutani/hatchery/pkg/domain/types"
 )
 
 type ctxLoggerKey struct{}
@@ -35,12 +35,12 @@ func CtxLogger(ctx context.Context) *slog.Logger {
 type ctxRequestIDKey struct{}
 
 // CtxRequestID returns request ID from context. If request ID is not set, return new request ID and context with it
-func CtxRequestID(ctx context.Context) (model.RequestID, context.Context) {
-	if id, ok := ctx.Value(ctxRequestIDKey{}).(model.RequestID); ok {
+func CtxRequestID(ctx context.Context) (types.RequestID, context.Context) {
+	if id, ok := ctx.Value(ctxRequestIDKey{}).(types.RequestID); ok {
 		return id, ctx
 	}
 
-	newID := model.NewRequestID()
+	newID := types.NewRequestID()
 	ctx = CtxLoggerWith(ctx, slog.Any("request_id", newID))
 	ctx = context.WithValue(ctx, ctxRequestIDKey{}, newID)
 	return newID, ctx
