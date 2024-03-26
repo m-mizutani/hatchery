@@ -63,3 +63,23 @@ type apiResponse struct {
 		Action string `json:"action"`
 	}
 }
+
+func TestIntegration(t *testing.T) {
+	ctx := context.Background()
+	csClient := gt.R1(cs.New(ctx)).NoError(t)
+	clients := infra.New(infra.WithCloudStorage(csClient))
+
+	prefix := "slack/"
+	req := &config.SlackImpl{
+		AccessToken: utils.LoadEnv(t, "TEST_SLACK_ACCESS_TOKEN"),
+		Bucket:      utils.LoadEnv(t, "TEST_BUCKET"),
+		Prefix:      &prefix,
+		Duration: &pkl.Duration{
+			Value: 20,
+			Unit:  pkl.Minute,
+		},
+		Limit: 1000,
+	}
+
+	gt.NoError(t, slack.Exec(ctx, clients, req)).Must()
+}
