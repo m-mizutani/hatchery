@@ -77,6 +77,8 @@ func (x *Logger) Configure() (*slog.Logger, error) {
 		masq.WithFieldName("ApiToken", redactOpt),
 		// for FalconDataReplicator
 		masq.WithFieldName("AwsSecretAccessKey", redactOpt),
+		// for Slack
+		masq.WithFieldName("AccessToken", redactOpt),
 	)
 
 	// Log level
