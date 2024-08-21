@@ -1,5 +1,10 @@
 package destination
 
+import (
+	"context"
+	"io"
+)
+
 // CloudStorage is a destination that writes data to a Google cloud storage bucket.
 type CloudStorage struct {
 	bucket string
@@ -14,7 +19,7 @@ func NewCloudStorage(bucket, prefix string) *CloudStorage {
 	}
 }
 
-func (c *CloudStorage) Write(data []byte) error {
+func (c *CloudStorage) NewWriter(ctx context.Context) (io.WriteCloser, error) {
 	// Write data to Google cloud storage bucket.
-	return nil
+	return nil, nil
 }

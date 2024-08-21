@@ -2,7 +2,6 @@ package source
 
 import (
 	"bytes"
-	"compress/gzip"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -12,22 +11,25 @@ import (
 	"time"
 
 	"github.com/m-mizutani/goerr"
+	"github.com/m-mizutani/hatchery"
 )
 
 type Slack struct {
-	accessToken string
+	// AccessToken is a secret value for Slack API.
+	AccessToken string `masq:"secret"`
+	MaxPages    *int
+	Limit       *int
+	Duration    *time.Duration
 }
 
-
-
-func Exec(ctx context.Context, clients *infra.Clients, req config.Slack) error {
+func (x *Slack) Load(ctx context.Context, dst hatchery.Destination) error {
 	var nextCursor string
-	now := utils.CtxNow(ctx)
+	now := timeFuncFromCtx(ctx)()
 
-	for seq := 0; req.GetMaxPages() == nil || seq < *req.GetMaxPages(); seq++ {
-		cursor, err := crawl(ctx, clients, req, now, seq, nextCursor)
+	for seq := 0; x.MaxPages == nil || seq < *x.MaxPages; seq++ {
+		cursor, err := x.crawl(ctx, now, nextCursor, dst)
 		if err != nil {
-			return goerr.Wrap(err, "failed to crawl slack logs").With("seq", seq).With("cursor", nextCursor).With("req", req)
+			return goerr.Wrap(err, "failed to crawl slack logs").With("seq", seq).With("cursor", nextCursor).With("config", *x)
 		}
 		if cursor == nil {
 			break
@@ -43,19 +45,20 @@ const (
 	baseURL = "https://api.slack.com/audit/v1/logs"
 )
 
-func crawl(ctx context.Context, clients *infra.Clients, req config.Slack, end time.Time, seq int, cursor string) (*string, error) {
-	d := req.GetDuration().GoDuration()
+func (x *Slack) crawl(ctx context.Context, end time.Time, cursor string, dst hatchery.Destination) (*string, error) {
+	d := 10 * time.Minute
+	if x.Duration != nil {
+		d = *x.Duration
+	}
 
-	objName := model.DefaultLogObjectName(ctx, req, end, seq)
-	objWriter := clients.CloudStorage().NewObjectWriter(ctx,
-		types.CSBucket(req.GetBucket()),
-		objName,
-	)
-	w := gzip.NewWriter(objWriter)
+	limit := 100
+	if x.Limit != nil {
+		limit = *x.Limit
+	}
 
 	startTime := end.Add(-d)
 	qv := url.Values{}
-	qv.Add("limit", fmt.Sprintf("%d", req.GetLimit()))
+	qv.Add("limit", fmt.Sprintf("%d", limit))
 	qv.Add("oldest", fmt.Sprintf("%d", startTime.Unix()))
 
 	if cursor != "" {
@@ -75,9 +78,11 @@ func crawl(ctx context.Context, clients *infra.Clients, req config.Slack, end ti
 	}
 
 	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", "Bearer "+req.GetAccessToken())
+	httpReq.Header.Set("Authorization", "Bearer "+x.AccessToken)
 
-	httpResp, err := clients.HTTPClient().Do(httpReq)
+	client := httpClientFromCtx(ctx)
+
+	httpResp, err := client.Do(httpReq)
 	if err != nil {
 		return nil, goerr.Wrap(err, "failed to send HTTP request")
 	}
@@ -97,16 +102,18 @@ func crawl(ctx context.Context, clients *infra.Clients, req config.Slack, end ti
 		return nil, goerr.Wrap(err, "failed to unmarshal response body")
 	}
 
+	w, err := dst.NewWriter(ctx)
+	if err != nil {
+		return nil, goerr.Wrap(err, "failed to create object writer")
+	}
+
 	n, err := io.Copy(w, bytes.NewReader(body))
 	if err != nil {
 		return nil, goerr.Wrap(err, "failed to write response to object writer").With("bytes", n)
 	}
 
 	if err := w.Close(); err != nil {
-		return nil, goerr.Wrap(err, "failed to close gzip writer").With("object", objName)
-	}
-	if err := objWriter.Close(); err != nil {
-		return nil, goerr.Wrap(err, "failed to close object writer").With("object", objName)
+		return nil, goerr.Wrap(err, "failed to close dst writer")
 	}
 
 	if resp.ResponseMetadata.NextCursor != "" {
